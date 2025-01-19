@@ -1,6 +1,6 @@
 from pathlib import Path
 from PySide6.QtGui import QAction, QKeySequence, QStandardItemModel, QStandardItem
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QDockWidget, QListView, QVBoxLayout, QWidget, QTreeView
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QDockWidget, QListView, QVBoxLayout, QWidget, QTreeView, QColorDialog
 from PySide6.QtCore import Qt
 import mbsModel
 import main_widget as mwid
@@ -37,10 +37,6 @@ class MainWindow(QMainWindow):
 
         # Statusleiste initialisieren
         self.statusBar().showMessage("Laden Sie ein JSON oder FDD File ein, um es anzuzeigen")
-
-        # Text-Actor initialisieren
-        self.centralWidget().update_text_actor(self.DEFAULT_TEXT)
-        self.is_text_visible = False  # Flag, um den Text ein- und auszublenden
 
         # Initialisierung vom Interactor
         self.current_interactor_style = "default"
@@ -157,6 +153,12 @@ class MainWindow(QMainWindow):
         control_menu.addAction(self._create_action("Switch Interactor Style", self.toggle_interactor_style))
         control_menu.addAction(self._create_action("Interaction Information Text", self.toggle_control_text))
 
+        # Design-Menü
+        design_menu = menu_bar.addMenu("Design")
+        design_menu.addAction(self._create_action("Background Color", self.change_background_color))
+        design_menu.addAction(self._create_action("Text Color", self.change_text_color))
+        
+
     def _create_action(self, name, method, shortcut=None):
         """Hilfsmethode zum Erstellen von Aktionen."""
         action = QAction(name, self)
@@ -222,6 +224,7 @@ class MainWindow(QMainWindow):
         else:
             self.showFullScreen()
 
+
     def toggle_interactor_style(self):
         """Wechselt zwischen dem Standard-Interactor und Trackball-Interactor."""
         render_window = self.centralWidget().GetRenderWindow()
@@ -231,13 +234,15 @@ class MainWindow(QMainWindow):
             trackball_style = vtk.vtkInteractorStyleTrackballCamera()
             interactor.SetInteractorStyle(trackball_style)
             self.current_interactor_style = "trackball"
-            self.centralWidget().update_text_actor(self.TRACKBALL_TEXT)
+            if self.is_text_visible:
+                self.centralWidget().update_text_actor(self.TRACKBALL_TEXT)
             self.statusBar().showMessage("Trackball Interactor aktiviert")
         else:
             default_style = vtk.vtkInteractorStyleSwitch()
             interactor.SetInteractorStyle(default_style)
             self.current_interactor_style = "default"
-            self.centralWidget().update_text_actor(self.DEFAULT_TEXT)
+            if self.is_text_visible:
+                self.centralWidget().update_text_actor(self.DEFAULT_TEXT)
             self.statusBar().showMessage("Standard Interactor aktiviert")
 
 
@@ -265,6 +270,23 @@ class MainWindow(QMainWindow):
         renderer.ResetCameraClippingRange()  # Sicherstellen, dass die Clipping-Range korrekt ist
         self.centralWidget().GetRenderWindow().Render()
         self.statusBar().showMessage("Ansicht zurückgesetzt")
+
+
+    def change_background_color(self):
+        """Ändert die Hintergrundfarbe des Renderers."""
+        color = QColorDialog.getColor()
+        if color.isValid():
+            r, g, b, _ = color.getRgbF()
+            self.centralWidget().GetRenderer().SetBackground(r, g, b)
+            self.centralWidget().GetRenderWindow().Render()
+
+    def change_text_color(self):
+        """Ändert die Farbe des Text-Actors."""
+        color = QColorDialog.getColor()
+        if color.isValid():
+            r, g, b, _ = color.getRgbF()
+            self.centralWidget().text_actor.GetTextProperty().SetColor(r, g, b)
+            self.centralWidget().GetRenderWindow().Render()
 
 
     def set_front_view(self):
