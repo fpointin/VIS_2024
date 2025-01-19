@@ -151,13 +151,13 @@ class MainWindow(QMainWindow):
         # Steuerung-Menü
         control_menu = menu_bar.addMenu("Control")
         control_menu.addAction(self._create_action("Switch Interactor Style", self.toggle_interactor_style))
-        control_menu.addAction(self._create_action("Interaction Information Text", self.toggle_control_text))
+        control_menu.addAction(self._create_action("Show/Hide Interaction Information Text", self.toggle_control_text))
 
         # Design-Menü
         design_menu = menu_bar.addMenu("Design")
         design_menu.addAction(self._create_action("Background Color", self.change_background_color))
         design_menu.addAction(self._create_action("Text Color", self.change_text_color))
-        
+
 
     def _create_action(self, name, method, shortcut=None):
         """Hilfsmethode zum Erstellen von Aktionen."""
