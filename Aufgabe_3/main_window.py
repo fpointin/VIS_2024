@@ -47,7 +47,6 @@ class MainWindow(QMainWindow):
         # View-Menü
         view_menu = menu_bar.addMenu("View")
         view_menu.addAction(self.create_action("Fullscreen", self.toggle_fullscreen, QKeySequence("F11")))
-        view_menu.addAction(self.create_action("Reset View", self.reset_view))
         view_menu.addSeparator()
         view_menu.addAction(self.create_action("Front View", self.set_front_view))
         view_menu.addAction(self.create_action("Back View", self.set_back_view))
@@ -69,35 +68,13 @@ class MainWindow(QMainWindow):
         about_menu.addAction(self.create_action("Information", self.show_about_info))
 
 
-    def show_about_info(self):
-        # Infotext
-        QMessageBox.information(
-            self,
-            "About",
-            "VIS3VO/VIS3UE Projekt\nFreedyn GUI\nFabian Pointinger\nS2310566016\nfabian.pointinger@students.fh-wels.at\n"
-        )
-
     def create_action(self, name, method, shortcut=None):
-        # Hilfsfunktion zur Erstellung von Aktionen
-        action = QAction(name, self)
-        if shortcut:
-            action.setShortcut(shortcut)
-        action.triggered.connect(method)
-        return action
-
-
-    def toggle_control_text(self):
-        # Umschalten des Steuerungstextes, je nachdem welcher Interactor ausgewählt ist
-        if self.is_text_visible:
-            # wenn Text ersichtlich, dann ausblenden
-            self.centralWidget().update_text_actor("")  # Text ausblenden
-            self.is_text_visible = False # Status setzen
-            self.statusBar().showMessage("Steuerungstext ausgeblendet")
-        else:
-            # Text basierend auf dem aktuellen Interactor Style anzeigen
-            self.centralWidget().update_text_actor(self.current_interactor_style)
-            self.is_text_visible = True # Status setzen
-            self.statusBar().showMessage("Steuerungstext angezeigt")
+            # Hilfsfunktion zur Erstellung von Aktionen
+            action = QAction(name, self)
+            if shortcut:
+                action.setShortcut(shortcut)
+            action.triggered.connect(method)
+            return action
 
 
     def load_model(self):
@@ -137,6 +114,29 @@ class MainWindow(QMainWindow):
             self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
 
 
+    def show_about_info(self):
+        # Infotext
+        QMessageBox.information(
+            self,
+            "About",
+            "VIS3VO/VIS3UE Projekt\nFreedyn GUI\nFabian Pointinger\nS2310566016\nfabian.pointinger@students.fh-wels.at\n"
+        )
+
+
+    def toggle_control_text(self):
+        # Umschalten des Steuerungstextes, je nachdem welcher Interactor ausgewählt ist
+        if self.is_text_visible:
+            # wenn Text ersichtlich, dann ausblenden
+            self.centralWidget().update_text_actor("")  # Text ausblenden
+            self.is_text_visible = False # Status setzen
+            self.statusBar().showMessage("Steuerungstext ausgeblendet")
+        else:
+            # Text basierend auf dem aktuellen Interactor Style anzeigen
+            self.centralWidget().update_text_actor(self.current_interactor_style)
+            self.is_text_visible = True # Status setzen
+            self.statusBar().showMessage("Steuerungstext angezeigt")
+
+
     def toggle_fullscreen(self):
         # zwischen Vollbild und Standard umschalten
         if self.isFullScreen():
@@ -169,31 +169,6 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Standard Interactor aktiviert")
 
 
-    def reset_view(self):
-        """Zentriert die Ansicht auf das Modell und setzt die Kamera zurück."""
-        renderer = self.centralWidget().GetRenderer()
-        camera = renderer.GetActiveCamera()
-        
-        # Berechne Bounding-Box des aktuellen Modells
-        renderer.ResetCamera()  # Standard-Reset
-        bounds = renderer.ComputeVisiblePropBounds()
-        
-        if bounds:
-            center_x = (bounds[0] + bounds[1]) / 2.0
-            center_y = (bounds[2] + bounds[3]) / 2.0
-            center_z = (bounds[4] + bounds[5]) / 2.0
-            camera.SetFocalPoint(center_x, center_y, center_z)
-            
-            # Setze Kamera-Position zurück (z. B. auf eine Distanz basierend auf Bounding-Box)
-            diagonal = ((bounds[1] - bounds[0]) ** 2 + (bounds[3] - bounds[2]) ** 2 + (bounds[5] - bounds[4]) ** 2) ** 0.5
-            camera.SetPosition(center_x, center_y, center_z + 2.0 * diagonal)  # Kamera etwas entfernt setzen
-            camera.SetViewUp(0, 1, 0)  # Standard-Ausrichtung der Kamera
-
-        renderer.ResetCameraClippingRange()  # Sicherstellen, dass die Clipping-Range korrekt ist
-        self.centralWidget().GetRenderWindow().Render()
-        self.statusBar().showMessage("Ansicht zurückgesetzt")
-
-
     def change_background_color(self):
         # Hintergrundfarbe des Renderers ändern
         color = QColorDialog.getColor()
@@ -214,29 +189,34 @@ class MainWindow(QMainWindow):
 
     # verschiedene Ansichten
     def set_front_view(self):
+        # Blickrichtung entlang der negativen Y-Achse
         self.set_camera_orientation(0, -1, 0, 0, 0, 1)
         self.statusBar().showMessage("Front-Ansicht")
 
     def set_back_view(self):
+        # Blickrichtung entlang der positiven Y-Achse
         self.set_camera_orientation(0, 1, 0, 0, 0, 1)
         self.statusBar().showMessage("Back-Ansicht")
 
     def set_left_view(self):
+        # Blickrichtung entlang der negativen X-Achse
         self.set_camera_orientation(-1, 0, 0, 0, 0, 1)
         self.statusBar().showMessage("Left-Ansicht")
 
     def set_right_view(self):
+        # Blickrichtung entlang der positiven X-Achse
         self.set_camera_orientation(1, 0, 0, 0, 0, 1)
         self.statusBar().showMessage("Right-Ansicht")
 
     def set_top_view(self):
-        self.set_camera_orientation(0, 0, 1, 0, -1, 0)
+        # Blickrichtung entlang der negativen Z-Achse
+        self.set_camera_orientation(0, 0, -1, 0, 1, 0)
         self.statusBar().showMessage("Top-Ansicht")
 
     def set_bottom_view(self):
-        self.set_camera_orientation(0, 0, -1, 0, 1, 0)
+        # Blickrichtung entlang der positiven Z-Achse
+        self.set_camera_orientation(0, 0, 1, 0, -1, 0)
         self.statusBar().showMessage("Bottom-Ansicht")
-
 
     def set_camera_orientation(self, pos_x, pos_y, pos_z, up_x, up_y, up_z):
         # Kameraansicht Hilfsfunktion
@@ -247,6 +227,7 @@ class MainWindow(QMainWindow):
         camera.SetViewUp(up_x, up_y, up_z)
         renderer.ResetCamera()
         self.centralWidget().GetRenderWindow().Render()
+
 
     def show_message(self, title, text):
         # Fehlermeldung Ausgabe
