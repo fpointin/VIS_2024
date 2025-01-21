@@ -57,7 +57,7 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
 
     def create_structure_tree_dock(self):
         # Dock und Baum anlegen
-        
+
         self.treeWidget = QTreeWidget()
         self.treeWidget.setHeaderLabels(["File Name"])
 

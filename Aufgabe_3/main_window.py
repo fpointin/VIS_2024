@@ -9,7 +9,10 @@ class MainWindow(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("3D Modell in QT mit VTK")
+
+        # zentrales Widget setzen und Renderer initialisieren
         self.setCentralWidget(widget)
+        self.centralWidget().GetRenderWindow().Render()
 
         # Modell kommt mit dem Widget mit
         self.myModel = widget.getModel()
@@ -28,8 +31,6 @@ class MainWindow(QMainWindow):
         self.structure_tree_dock = widget.create_structure_tree_dock()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.structure_tree_dock)
 
-        # Sicherstellen, dass der Renderer initialisiert wird
-        self._initialize_renderer()
 
     def create_menus(self):
         # Erstellen der Menüs und Aktionen
@@ -69,7 +70,7 @@ class MainWindow(QMainWindow):
 
 
     def show_about_info(self):
-        """Zeigt ein Informationsfenster mit Details zum Projekt an."""
+        # Infotext
         QMessageBox.information(
             self,
             "About",
@@ -135,18 +136,6 @@ class MainWindow(QMainWindow):
         else:
             self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
 
-    def _initialize_renderer(self):
-        """Initialisiert den Renderer und die Kamera, falls noch kein Modell geladen wurde."""
-        renderer = self.centralWidget().GetRenderer()
-        camera = renderer.GetActiveCamera()
-
-        # Standard-Kamera-Einstellungen, falls kein Modell vorhanden ist
-        renderer.SetBackground(1.0, 1.0, 1.0)  # Weißer Hintergrund
-        camera.SetPosition(0, 0, 10)  # Kamera etwas entfernt setzen
-        camera.SetFocalPoint(0, 0, 0)
-        camera.SetViewUp(0, 1, 0)
-        renderer.ResetCamera()
-        self.centralWidget().GetRenderWindow().Render()
 
     def toggle_fullscreen(self):
         # zwischen Vollbild und Standard umschalten
@@ -155,8 +144,7 @@ class MainWindow(QMainWindow):
             self.setGeometry(100, 100, 800, 600) # Standardgröße hier ändern
         else:
             self.showFullScreen()
-        # Renderer sicherstellen
-        self._initialize_renderer()
+
 
     def toggle_interactor_style(self):
         # zwischen Standard- und Trackball Interactor umschalten
