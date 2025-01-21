@@ -13,14 +13,12 @@ class MainWindow(QMainWindow):
         "- Rechte Maustaste: Zoom\n"
         "- Shift + Linke Maustaste: Verschieben"
     )
-
     TRACKBALL_TEXT = (
         "TRACKBALL Steuerung:\n"
         "- Linke Maustaste: Rotieren\n"
         "- Rechte Maustaste: Zoom\n"
         "- Shift + Linke Maustaste: Verschieben"
     )
-
     WINDOW_GEOMETRY = (100, 100, 800, 600)  # x, y, Breite, Höhe
 
     def __init__(self, widget):
@@ -30,10 +28,10 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(widget)
 
         # Initialisiere MBS Modell
-        self.myModel = mbsModel.mbsModel()
+        self.myModel = widget.getModel()
 
         # Menü und Aktionen erstellen
-        self._create_menus()
+        self.create_menus()
 
         # Statusleiste initialisieren
         self.statusBar().showMessage("Laden Sie ein JSON oder FDD File ein, um es anzuzeigen")
@@ -45,121 +43,46 @@ class MainWindow(QMainWindow):
         self.centralWidget().update_text_actor("")  # Kein Text beim Start
 
         # Strukturbaum-Dock-Widget hinzufügen
-        self.structure_tree_dock = self._create_structure_tree_dock()
+        self.structure_tree_dock = widget.create_structure_tree_dock()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.structure_tree_dock)
 
-    def _create_structure_tree_dock(self):
-        """Erstellt das Dock-Widget für den Strukturbaum."""
-        dock_widget = QDockWidget("Strukturbaum", self)
-        dock_widget.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        
-        # Erstelle ein Widget für den Strukturbaum
-        tree_widget = QWidget()
-        layout = QVBoxLayout(tree_widget)
-
-        # Erstelle den Baum-Modell
-        self.tree_model = QStandardItemModel()
-        self.tree_view = QTreeView()
-        self.tree_view.setModel(self.tree_model)
-        layout.addWidget(self.tree_view)
-
-        # Baum mit Objekten aus dem Modell füllen
-        self.update_structure_tree()
-
-        # Setze das Widget im Dock-Widget
-        dock_widget.setWidget(tree_widget)
-
-        return dock_widget
-    
-    def update_structure_tree(self, file_name="File Name"):
-        """Aktualisiert den Strukturbaum mit den geladenen MBS-Objekten."""
-        # Clear the model completely
-        self.tree_model.clear()
-
-        # Explicitly set the root item
-        root_item = QStandardItem(file_name)
-        root_item.setEditable(False)  # Prevent editing of the root item
-        self.tree_model.appendRow(root_item)
-
-        # Add child categories to the root item
-        rigid_bodies_item = QStandardItem("Rigid Bodies")
-        rigid_bodies_item.setEditable(False)
-
-        constraints_item = QStandardItem("Constraints")
-        constraints_item.setEditable(False)
-
-        forces_item = QStandardItem("Forces")
-        forces_item.setEditable(False)
-
-        measures_item = QStandardItem("Measures")
-        measures_item.setEditable(False)
-
-        # Populate the categories with model objects
-        for obj in self.myModel.get_mbsObjectList():
-            obj_type, name = self.myModel.get_object_type_and_name(obj)
-            item = QStandardItem(name)
-
-            if obj_type == "Body":
-                rigid_bodies_item.appendRow(item)
-                rigid_bodies_item.setEditable(False)
-            elif obj_type == "Constraint":
-                constraints_item.appendRow(item)
-                constraints_item.setEditable(False)
-            elif obj_type == "Force":
-                forces_item.appendRow(item)
-                forces_item.setEditable(False)
-            elif obj_type == "Measure":
-                measures_item.appendRow(item)
-                measures_item.setEditable(False)
-
-        # Append categories to the root item
-        root_item.appendRow(rigid_bodies_item)
-        root_item.appendRow(constraints_item)
-        root_item.appendRow(forces_item)
-        root_item.appendRow(measures_item)
-
-        # Set the model's root item (no "1" anymore)
-        self.tree_view.expandAll()
-
-
-
-    def _create_menus(self):
+    def create_menus(self):
         """Erstellt die Menüs und fügt Aktionen hinzu."""
         menu_bar = self.menuBar()
 
         # Datei-Menü
         file_menu = menu_bar.addMenu("File")
-        file_menu.addAction(self._create_action("Load from JSON", self.load_model))
-        file_menu.addAction(self._create_action("Open FDD", self.import_fdd))
+        file_menu.addAction(self.create_action("Load from JSON", self.load_model))
+        file_menu.addAction(self.create_action("Open FDD", self.import_fdd))
         file_menu.addSeparator()
-        file_menu.addAction(self._create_action("Save to JSON", self.save_model))
+        file_menu.addAction(self.create_action("Save to JSON", self.save_model))
         file_menu.addSeparator()
-        file_menu.addAction(self._create_action("EXIT", self.close, QKeySequence.Quit))
+        file_menu.addAction(self.create_action("EXIT", self.close, QKeySequence.Quit))
 
         # View-Menü
         view_menu = menu_bar.addMenu("View")
-        view_menu.addAction(self._create_action("Fullscreen", self.toggle_fullscreen, QKeySequence("F11")))
-        view_menu.addAction(self._create_action("Reset View", self.reset_view))
+        view_menu.addAction(self.create_action("Fullscreen", self.toggle_fullscreen, QKeySequence("F11")))
+        view_menu.addAction(self.create_action("Reset View", self.reset_view))
         view_menu.addSeparator()
-        view_menu.addAction(self._create_action("Front View", self.set_front_view))
-        view_menu.addAction(self._create_action("Back View", self.set_back_view))
-        view_menu.addAction(self._create_action("Left View", self.set_left_view))
-        view_menu.addAction(self._create_action("Right View", self.set_right_view))
-        view_menu.addAction(self._create_action("Top View", self.set_top_view))
-        view_menu.addAction(self._create_action("Bottom View", self.set_bottom_view))
+        view_menu.addAction(self.create_action("Front View", self.set_front_view))
+        view_menu.addAction(self.create_action("Back View", self.set_back_view))
+        view_menu.addAction(self.create_action("Left View", self.set_left_view))
+        view_menu.addAction(self.create_action("Right View", self.set_right_view))
+        view_menu.addAction(self.create_action("Top View", self.set_top_view))
+        view_menu.addAction(self.create_action("Bottom View", self.set_bottom_view))
 
         # Steuerung-Menü
         control_menu = menu_bar.addMenu("Control")
-        control_menu.addAction(self._create_action("Switch Interactor Style", self.toggle_interactor_style))
-        control_menu.addAction(self._create_action("Show/Hide Interaction Information Text", self.toggle_control_text))
+        control_menu.addAction(self.create_action("Switch Interactor Style", self.toggle_interactor_style))
+        control_menu.addAction(self.create_action("Show/Hide Interaction Information Text", self.toggle_control_text))
 
         # Design-Menü
         design_menu = menu_bar.addMenu("Design")
-        design_menu.addAction(self._create_action("Background Color", self.change_background_color))
-        design_menu.addAction(self._create_action("Text Color", self.change_text_color))
+        design_menu.addAction(self.create_action("Background Color", self.change_background_color))
+        design_menu.addAction(self.create_action("Text Color", self.change_text_color))
 
 
-    def _create_action(self, name, method, shortcut=None):
+    def create_action(self, name, method, shortcut=None):
         """Hilfsmethode zum Erstellen von Aktionen."""
         action = QAction(name, self)
         if shortcut:
@@ -182,7 +105,7 @@ class MainWindow(QMainWindow):
             self.is_text_visible = True
             self.statusBar().showMessage("Steuerungstext angezeigt")
 
-    def load_model(self):
+    def load_model(self,widget):
         """Lädt ein Modell aus einer JSON-Datei."""
         filename, _ = QFileDialog.getOpenFileName(self, "Open JSON File", "", "JSON Files (*.json)")
         if filename:
@@ -191,9 +114,9 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage(f"Modell aus JSON geladen: {filename}")
                 self.centralWidget().update_renderer(self.myModel)
                 # Aktualisiere den Strukturbaum mit dem tatsächlichen Dateinamen
-                self.update_structure_tree(file_name=Path(filename).name)
+                self.centralWidget().update_structure_tree(file_name=Path(filename).name)
             else:
-                self._show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine JSON-Datei aus.")
+                self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine JSON-Datei aus.")
         else:
             self.statusBar().showMessage("Modell-Laden abgebrochen")
 
@@ -204,7 +127,7 @@ class MainWindow(QMainWindow):
             self.myModel.saveDatabase(Path(filename))
             self.statusBar().showMessage(f"Modell gespeichert: {filename}")
 
-    def import_fdd(self):
+    def import_fdd(self,widget):
         """Importiert ein Modell aus einer FDD-Datei."""
         filename, _ = QFileDialog.getOpenFileName(self, "Import FDD File", "", "FDD Files (*.fdd)")
         if filename.lower().endswith(".fdd"):
@@ -212,9 +135,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(f"FDD-Datei importiert: {filename}")
             self.centralWidget().update_renderer(self.myModel)
             # Aktualisiere den Strukturbaum mit dem tatsächlichen Dateinamen
-            self.update_structure_tree(file_name=Path(filename).name)
+            self.centralWidget().update_structure_tree(file_name=Path(filename).name)
         else:
-            self._show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
+            self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
 
     def toggle_fullscreen(self):
         """Schaltet zwischen Vollbild und Standardgröße um."""
@@ -313,7 +236,7 @@ class MainWindow(QMainWindow):
         self._set_camera_orientation(0, 0, -1, 0, 1, 0)
         self.statusBar().showMessage("Bottom-Ansicht")
 
-    def _set_camera_orientation(self, pos_x, pos_y, pos_z, up_x, up_y, up_z):
+    def set_camera_orientation(self, pos_x, pos_y, pos_z, up_x, up_y, up_z):
         """Hilfsmethode zum Einstellen der Kameraausrichtung."""
         renderer = self.centralWidget().GetRenderer()
         camera = renderer.GetActiveCamera()
@@ -323,6 +246,6 @@ class MainWindow(QMainWindow):
         renderer.ResetCamera()
         self.centralWidget().GetRenderWindow().Render()
 
-    def _show_message(self, title, text):
+    def show_message(self, title, text):
         """Zeigt eine Fehlermeldung an."""
         QMessageBox.critical(self, title, text)
