@@ -1,8 +1,10 @@
 import vtk
 import QVTKRenderWindowInteractor as QVTK
 from PySide6.QtGui import QStandardItemModel, QStandardItem
-from PySide6.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QTreeView
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QTreeView, QTreeWidget, QHBoxLayout, QTreeWidgetItem
 import mbsModel
+from main_window import MainWindow
 
 class Widget(QVTK.QVTKRenderWindowInteractor):
     def __init__(self):
@@ -54,66 +56,49 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
 
 
     def create_structure_tree_dock(self):
-        # Strukturbaum mit Dock Widget erstellen 
-
-        dock_widget = QDockWidget("Strukturbaum", self) # anlegen des Docks
-        dock_widget.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable) # Dock verschiebbar machen
+        # Dock und Baum anlegen
         
-        tree_widget = QWidget() # Strukturbaum ist ein QWidget
-        layout = QVBoxLayout(tree_widget) # layout ist ein QVBoxLayout
+        self.treeWidget = QTreeWidget()
+        self.treeWidget.setHeaderLabels(["File Name"])
 
-        self.tree_model = QStandardItemModel() # Anlegen des Strukturbaums als StandardItemModel
-        self.tree_view = QTreeView() # Anlegen des Tree-Views
+        self.treeDockWidget = QDockWidget("Model Tree", self)
+        self.treeDockWidget.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.treeDockWidget.setWidget(self.treeWidget)
 
-        self.tree_view.setModel(self.tree_model) # StandardItemModel in tree-view übergeben
-        layout.addWidget(self.tree_view) # den tree-view ins Layout geben
-        self.update_structure_tree() # Strukturbaum updaten 
-        dock_widget.setWidget(tree_widget) # den Strukturbaum ins Dock setzen
-
-        return dock_widget
+        self.update_structure_tree()  # Strukturbaum updaten
+        return self.treeDockWidget
     
 
     def update_structure_tree(self, file_name="File Name"):
         # Strukturbaum updaten
 
-        self.tree_model.clear() # Modellbaum löschen
+        self.treeWidget.clear() # alten Baum löschen
+        self.treeWidget.setHeaderLabels([file_name]) # Filename als Überschrift nehmen
 
-        root_item = QStandardItem(file_name) # Dateinamen als Überschrift setzen
-        root_item.setEditable(False)  
-        self.tree_model.appendRow(root_item) # Die Überschrift als StandardItem dem tree-model anhängen
-
-        # Überschriften für die jeweiligen Objekt-Arten
-        rigid_bodies_item = QStandardItem("Rigid Bodies")
-        rigid_bodies_item.setEditable(False)
-        constraints_item = QStandardItem("Constraints")
-        constraints_item.setEditable(False)
-        forces_item = QStandardItem("Forces")
-        forces_item.setEditable(False)
-        measures_item = QStandardItem("Measures")
-        measures_item.setEditable(False)
+        # Überschriften der verschiedenen Objekttypen
+        self.rootBody = QTreeWidgetItem(["Bodies"])
+        self.treeWidget.addTopLevelItem(self.rootBody)
+        self.rootConstraint = QTreeWidgetItem(["Constraints"])
+        self.treeWidget.addTopLevelItem(self.rootConstraint)
+        self.rootForces = QTreeWidgetItem(["Forces"])
+        self.treeWidget.addTopLevelItem(self.rootForces)
+        self.rootMeasures = QTreeWidgetItem(["Measures"])
+        self.treeWidget.addTopLevelItem(self.rootMeasures)
 
         # Objekte durschauen und deren Namen in der richtigen Überschrift auflisten
         for obj in self.myModel.get_mbsObjectList():
             obj_type, name = self.myModel.get_object_type_and_name(obj)
-            item = QStandardItem(name)
-
             if obj_type == "Body":
-                rigid_bodies_item.appendRow(item)
-                rigid_bodies_item.setEditable(False)
+                self.childBody = QTreeWidgetItem([name])
+                self.rootBody.addChild(self.childBody)
             elif obj_type == "Constraint":
-                constraints_item.appendRow(item)
-                constraints_item.setEditable(False)
+                self.childConstraint = QTreeWidgetItem([name])
+                self.rootConstraint.addChild(self.childConstraint)
             elif obj_type == "Force":
-                forces_item.appendRow(item)
-                forces_item.setEditable(False)
+                self.childForce = QTreeWidgetItem([name])
+                self.rootForces.addChild(self.childForce)
             elif obj_type == "Measure":
-                measures_item.appendRow(item)
-                measures_item.setEditable(False)
+                self.childMeasure = QTreeWidgetItem([name])
+                self.rootMeasures.addChild(self.childMeasure)
 
-        # die gelesenen Objekte (Überschrift + einzelne Objekte) zum Root-Item (Dateiname/Überschrift) hinzufügen
-        root_item.appendRow(rigid_bodies_item)
-        root_item.appendRow(constraints_item)
-        root_item.appendRow(forces_item)
-        root_item.appendRow(measures_item)
-
-        self.tree_view.expandAll() # Baum aufklappen
+        self.treeWidget.expandAll() # Baum aufklappen

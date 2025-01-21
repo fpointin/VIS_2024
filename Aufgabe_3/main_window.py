@@ -28,6 +28,8 @@ class MainWindow(QMainWindow):
         self.structure_tree_dock = widget.create_structure_tree_dock()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.structure_tree_dock)
 
+        # Sicherstellen, dass der Renderer initialisiert wird
+        self._initialize_renderer()
 
     def create_menus(self):
         # Erstellen der Menüs und Aktionen
@@ -35,12 +37,12 @@ class MainWindow(QMainWindow):
 
         # Datei-Menü
         file_menu = menu_bar.addMenu("File")
-        file_menu.addAction(self.create_action("Load from JSON", self.load_model, QKeySequence(Qt.CTRL + Qt.Key_L)))
-        file_menu.addAction(self.create_action("Open FDD", self.import_fdd, QKeySequence(Qt.CTRL + Qt.Key_O)))
+        file_menu.addAction(self.create_action("Load from JSON", self.load_model, QKeySequence(Qt.CTRL | Qt.Key_L)))
+        file_menu.addAction(self.create_action("Open FDD", self.import_fdd, QKeySequence(Qt.CTRL | Qt.Key_O)))
         file_menu.addSeparator()
         file_menu.addAction(self.create_action("Save to JSON", self.save_model,QKeySequence.Save))
         file_menu.addSeparator()
-        file_menu.addAction(self.create_action("Quit", self.close, QKeySequence(Qt.CTRL + Qt.Key_Q)))
+        file_menu.addAction(self.create_action("Quit", self.close, QKeySequence(Qt.CTRL | Qt.Key_Q)))
         # View-Menü
         view_menu = menu_bar.addMenu("View")
         view_menu.addAction(self.create_action("Fullscreen", self.toggle_fullscreen, QKeySequence("F11")))
@@ -61,6 +63,18 @@ class MainWindow(QMainWindow):
         design_menu.addAction(self.create_action("Background Color", self.change_background_color))
         design_menu.addAction(self.create_action("Text Color", self.change_text_color))
 
+        # About-Menü
+        about_menu = menu_bar.addMenu("About")
+        about_menu.addAction(self.create_action("Information", self.show_about_info))
+
+
+    def show_about_info(self):
+        """Zeigt ein Informationsfenster mit Details zum Projekt an."""
+        QMessageBox.information(
+            self,
+            "About",
+            "VIS3VO/VIS3UE Projekt\nFreedyn GUI\nFabian Pointinger\nS2310566016\nfabian.pointinger@students.fh-wels.at\n"
+        )
 
     def create_action(self, name, method, shortcut=None):
         # Hilfsfunktion zur Erstellung von Aktionen
@@ -121,6 +135,18 @@ class MainWindow(QMainWindow):
         else:
             self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
 
+    def _initialize_renderer(self):
+        """Initialisiert den Renderer und die Kamera, falls noch kein Modell geladen wurde."""
+        renderer = self.centralWidget().GetRenderer()
+        camera = renderer.GetActiveCamera()
+
+        # Standard-Kamera-Einstellungen, falls kein Modell vorhanden ist
+        renderer.SetBackground(1.0, 1.0, 1.0)  # Weißer Hintergrund
+        camera.SetPosition(0, 0, 10)  # Kamera etwas entfernt setzen
+        camera.SetFocalPoint(0, 0, 0)
+        camera.SetViewUp(0, 1, 0)
+        renderer.ResetCamera()
+        self.centralWidget().GetRenderWindow().Render()
 
     def toggle_fullscreen(self):
         # zwischen Vollbild und Standard umschalten
@@ -129,7 +155,8 @@ class MainWindow(QMainWindow):
             self.setGeometry(100, 100, 800, 600) # Standardgröße hier ändern
         else:
             self.showFullScreen()
-
+        # Renderer sicherstellen
+        self._initialize_renderer()
 
     def toggle_interactor_style(self):
         # zwischen Standard- und Trackball Interactor umschalten
@@ -199,27 +226,27 @@ class MainWindow(QMainWindow):
 
     # verschiedene Ansichten
     def set_front_view(self):
-        self._set_camera_orientation(0, -1, 0, 0, 0, 1)
+        self.set_camera_orientation(0, -1, 0, 0, 0, 1)
         self.statusBar().showMessage("Front-Ansicht")
 
     def set_back_view(self):
-        self._set_camera_orientation(0, 1, 0, 0, 0, 1)
+        self.set_camera_orientation(0, 1, 0, 0, 0, 1)
         self.statusBar().showMessage("Back-Ansicht")
 
     def set_left_view(self):
-        self._set_camera_orientation(-1, 0, 0, 0, 0, 1)
+        self.set_camera_orientation(-1, 0, 0, 0, 0, 1)
         self.statusBar().showMessage("Left-Ansicht")
 
     def set_right_view(self):
-        self._set_camera_orientation(1, 0, 0, 0, 0, 1)
+        self.set_camera_orientation(1, 0, 0, 0, 0, 1)
         self.statusBar().showMessage("Right-Ansicht")
 
     def set_top_view(self):
-        self._set_camera_orientation(0, 0, 1, 0, -1, 0)
+        self.set_camera_orientation(0, 0, 1, 0, -1, 0)
         self.statusBar().showMessage("Top-Ansicht")
 
     def set_bottom_view(self):
-        self._set_camera_orientation(0, 0, -1, 0, 1, 0)
+        self.set_camera_orientation(0, 0, -1, 0, 1, 0)
         self.statusBar().showMessage("Bottom-Ansicht")
 
 
