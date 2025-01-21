@@ -1,10 +1,7 @@
 import vtk
 import QVTKRenderWindowInteractor as QVTK
-from PySide6.QtGui import QStandardItemModel, QStandardItem
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDockWidget, QVBoxLayout, QWidget, QTreeView, QTreeWidget, QHBoxLayout, QTreeWidgetItem
+from PySide6.QtWidgets import QDockWidget, QTreeWidget, QTreeWidgetItem
 import mbsModel
-from main_window import MainWindow
 
 class Widget(QVTK.QVTKRenderWindowInteractor):
     def __init__(self):
