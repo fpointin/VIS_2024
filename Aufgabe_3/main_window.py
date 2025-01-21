@@ -1,33 +1,17 @@
 from pathlib import Path
-from PySide6.QtGui import QAction, QKeySequence, QStandardItemModel, QStandardItem
-from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QDockWidget, QListView, QVBoxLayout, QWidget, QTreeView, QColorDialog
+from PySide6.QtGui import QAction, QKeySequence
+from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QColorDialog
 from PySide6.QtCore import Qt
-import mbsModel
-import main_widget as mwid
 import vtk
 
 class MainWindow(QMainWindow):
-    DEFAULT_TEXT = (
-        "DEFAULT Steuerung:\n"
-        "- Linke Maustaste: Rotieren\n"
-        "- Rechte Maustaste: Zoom\n"
-        "- Shift + Linke Maustaste: Verschieben"
-    )
-    TRACKBALL_TEXT = (
-        "TRACKBALL Steuerung:\n"
-        "- Linke Maustaste: Rotieren\n"
-        "- Rechte Maustaste: Zoom\n"
-        "- Shift + Linke Maustaste: Verschieben"
-    )
-    WINDOW_GEOMETRY = (100, 100, 800, 600)  # x, y, Breite, Höhe
-
     def __init__(self, widget):
         super().__init__()
 
         self.setWindowTitle("3D Modell in QT mit VTK")
         self.setCentralWidget(widget)
 
-        # Initialisiere MBS Modell
+        # Modell kommt mit dem Widget mit
         self.myModel = widget.getModel()
 
         # Menü und Aktionen erstellen
@@ -36,29 +20,27 @@ class MainWindow(QMainWindow):
         # Statusleiste initialisieren
         self.statusBar().showMessage("Laden Sie ein JSON oder FDD File ein, um es anzuzeigen")
 
-        # Initialisierung vom Interactor
-        self.current_interactor_style = "default"
-        # Text-Actor initialisieren (kein Text standardmäßig)
-        self.is_text_visible = False
-        self.centralWidget().update_text_actor("")  # Kein Text beim Start
+        # Initialisierungen
+        self.current_interactor_style = "default" # Standardmäßig Default Interactor Style 
+        self.is_text_visible = False # Standardmäßig kein Interactor Text
 
         # Strukturbaum-Dock-Widget hinzufügen
         self.structure_tree_dock = widget.create_structure_tree_dock()
         self.addDockWidget(Qt.LeftDockWidgetArea, self.structure_tree_dock)
 
+
     def create_menus(self):
-        """Erstellt die Menüs und fügt Aktionen hinzu."""
+        # Erstellen der Menüs und Aktionen
         menu_bar = self.menuBar()
 
         # Datei-Menü
         file_menu = menu_bar.addMenu("File")
-        file_menu.addAction(self.create_action("Load from JSON", self.load_model))
-        file_menu.addAction(self.create_action("Open FDD", self.import_fdd))
+        file_menu.addAction(self.create_action("Load from JSON", self.load_model, QKeySequence(Qt.CTRL + Qt.Key_L)))
+        file_menu.addAction(self.create_action("Open FDD", self.import_fdd, QKeySequence(Qt.CTRL + Qt.Key_O)))
         file_menu.addSeparator()
-        file_menu.addAction(self.create_action("Save to JSON", self.save_model))
+        file_menu.addAction(self.create_action("Save to JSON", self.save_model,QKeySequence.Save))
         file_menu.addSeparator()
-        file_menu.addAction(self.create_action("EXIT", self.close, QKeySequence.Quit))
-
+        file_menu.addAction(self.create_action("Quit", self.close, QKeySequence(Qt.CTRL + Qt.Key_Q)))
         # View-Menü
         view_menu = menu_bar.addMenu("View")
         view_menu.addAction(self.create_action("Fullscreen", self.toggle_fullscreen, QKeySequence("F11")))
@@ -70,12 +52,10 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.create_action("Right View", self.set_right_view))
         view_menu.addAction(self.create_action("Top View", self.set_top_view))
         view_menu.addAction(self.create_action("Bottom View", self.set_bottom_view))
-
         # Steuerung-Menü
         control_menu = menu_bar.addMenu("Control")
         control_menu.addAction(self.create_action("Switch Interactor Style", self.toggle_interactor_style))
         control_menu.addAction(self.create_action("Show/Hide Interaction Information Text", self.toggle_control_text))
-
         # Design-Menü
         design_menu = menu_bar.addMenu("Design")
         design_menu.addAction(self.create_action("Background Color", self.change_background_color))
@@ -83,34 +63,34 @@ class MainWindow(QMainWindow):
 
 
     def create_action(self, name, method, shortcut=None):
-        """Hilfsmethode zum Erstellen von Aktionen."""
+        # Hilfsfunktion zur Erstellung von Aktionen
         action = QAction(name, self)
         if shortcut:
             action.setShortcut(shortcut)
         action.triggered.connect(method)
         return action
 
+
     def toggle_control_text(self):
-        """Wechselt die Sichtbarkeit des Steuerungstextes."""
+        # Umschalten des Steuerungstextes, je nachdem welcher Interactor ausgewählt ist
         if self.is_text_visible:
+            # wenn Text ersichtlich, dann ausblenden
             self.centralWidget().update_text_actor("")  # Text ausblenden
-            self.is_text_visible = False
+            self.is_text_visible = False # Status setzen
             self.statusBar().showMessage("Steuerungstext ausgeblendet")
         else:
             # Text basierend auf dem aktuellen Interactor Style anzeigen
-            if self.current_interactor_style == "default":
-                self.centralWidget().update_text_actor(self.DEFAULT_TEXT)
-            elif self.current_interactor_style == "trackball":
-                self.centralWidget().update_text_actor(self.TRACKBALL_TEXT)
-            self.is_text_visible = True
+            self.centralWidget().update_text_actor(self.current_interactor_style)
+            self.is_text_visible = True # Status setzen
             self.statusBar().showMessage("Steuerungstext angezeigt")
 
-    def load_model(self,widget):
-        """Lädt ein Modell aus einer JSON-Datei."""
+
+    def load_model(self):
+        # JSON Datei Laden
         filename, _ = QFileDialog.getOpenFileName(self, "Open JSON File", "", "JSON Files (*.json)")
         if filename:
             if filename.lower().endswith(".json"):
-                self.myModel.loadDatabase(Path(filename))
+                self.myModel.loadDatabase(Path(filename)) # Routine aus mbsModel verwenden
                 self.statusBar().showMessage(f"Modell aus JSON geladen: {filename}")
                 self.centralWidget().update_renderer(self.myModel)
                 # Aktualisiere den Strukturbaum mit dem tatsächlichen Dateinamen
@@ -120,18 +100,20 @@ class MainWindow(QMainWindow):
         else:
             self.statusBar().showMessage("Modell-Laden abgebrochen")
 
+
     def save_model(self):
-        """Speichert das aktuelle Modell in einer JSON-Datei."""
+        # aktuell geöffnetes Modell als JSON speichern
         filename, _ = QFileDialog.getSaveFileName(self, "Save Model File", "", "JSON Files (*.json)")
         if filename:
-            self.myModel.saveDatabase(Path(filename))
+            self.myModel.saveDatabase(Path(filename)) # Routine aus mbsModel verwenden
             self.statusBar().showMessage(f"Modell gespeichert: {filename}")
 
-    def import_fdd(self,widget):
-        """Importiert ein Modell aus einer FDD-Datei."""
+
+    def import_fdd(self):
+        # FDD File einlesen
         filename, _ = QFileDialog.getOpenFileName(self, "Import FDD File", "", "FDD Files (*.fdd)")
         if filename.lower().endswith(".fdd"):
-            self.myModel.importFddFile(filename)
+            self.myModel.importFddFile(filename) # Routine aus mbsModel verwenden
             self.statusBar().showMessage(f"FDD-Datei importiert: {filename}")
             self.centralWidget().update_renderer(self.myModel)
             # Aktualisiere den Strukturbaum mit dem tatsächlichen Dateinamen
@@ -139,35 +121,37 @@ class MainWindow(QMainWindow):
         else:
             self.show_message("Ungültiges Dateiformat", "Bitte wählen Sie eine FDD-Datei aus.")
 
+
     def toggle_fullscreen(self):
-        """Schaltet zwischen Vollbild und Standardgröße um."""
+        # zwischen Vollbild und Standard umschalten
         if self.isFullScreen():
             self.showNormal()
-            self.setGeometry(*self.WINDOW_GEOMETRY)
+            self.setGeometry(100, 100, 800, 600) # Standardgröße hier ändern
         else:
             self.showFullScreen()
 
 
     def toggle_interactor_style(self):
-        """Wechselt zwischen dem Standard-Interactor und Trackball-Interactor."""
+        # zwischen Standard- und Trackball Interactor umschalten
         render_window = self.centralWidget().GetRenderWindow()
         interactor = render_window.GetInteractor()
 
         if self.current_interactor_style == "default":
+            # wenn aktuell default ist, dann auf trackball umschalten
             trackball_style = vtk.vtkInteractorStyleTrackballCamera()
             interactor.SetInteractorStyle(trackball_style)
             self.current_interactor_style = "trackball"
             if self.is_text_visible:
-                self.centralWidget().update_text_actor(self.TRACKBALL_TEXT)
+                self.centralWidget().update_text_actor(self.current_interactor_style)
             self.statusBar().showMessage("Trackball Interactor aktiviert")
         else:
+            # wenn aktuell trackball ist, dann auf default umschalten
             default_style = vtk.vtkInteractorStyleSwitch()
             interactor.SetInteractorStyle(default_style)
             self.current_interactor_style = "default"
             if self.is_text_visible:
-                self.centralWidget().update_text_actor(self.DEFAULT_TEXT)
+                self.centralWidget().update_text_actor(self.current_interactor_style)
             self.statusBar().showMessage("Standard Interactor aktiviert")
-
 
 
     def reset_view(self):
@@ -196,15 +180,16 @@ class MainWindow(QMainWindow):
 
 
     def change_background_color(self):
-        """Ändert die Hintergrundfarbe des Renderers."""
+        # Hintergrundfarbe des Renderers ändern
         color = QColorDialog.getColor()
         if color.isValid():
             r, g, b, _ = color.getRgbF()
             self.centralWidget().GetRenderer().SetBackground(r, g, b)
             self.centralWidget().GetRenderWindow().Render()
 
+
     def change_text_color(self):
-        """Ändert die Farbe des Text-Actors."""
+        # Textfarbe ändern
         color = QColorDialog.getColor()
         if color.isValid():
             r, g, b, _ = color.getRgbF()
@@ -212,6 +197,7 @@ class MainWindow(QMainWindow):
             self.centralWidget().GetRenderWindow().Render()
 
 
+    # verschiedene Ansichten
     def set_front_view(self):
         self._set_camera_orientation(0, -1, 0, 0, 0, 1)
         self.statusBar().showMessage("Front-Ansicht")
@@ -236,8 +222,9 @@ class MainWindow(QMainWindow):
         self._set_camera_orientation(0, 0, -1, 0, 1, 0)
         self.statusBar().showMessage("Bottom-Ansicht")
 
+
     def set_camera_orientation(self, pos_x, pos_y, pos_z, up_x, up_y, up_z):
-        """Hilfsmethode zum Einstellen der Kameraausrichtung."""
+        # Kameraansicht Hilfsfunktion
         renderer = self.centralWidget().GetRenderer()
         camera = renderer.GetActiveCamera()
         camera.SetPosition(pos_x, pos_y, pos_z)
@@ -247,5 +234,5 @@ class MainWindow(QMainWindow):
         self.centralWidget().GetRenderWindow().Render()
 
     def show_message(self, title, text):
-        """Zeigt eine Fehlermeldung an."""
+        # Fehlermeldung Ausgabe
         QMessageBox.critical(self, title, text)

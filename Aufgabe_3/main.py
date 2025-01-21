@@ -1,15 +1,15 @@
 import sys
 from PySide6.QtWidgets import QApplication
-import main_window as mwin
-import main_widget as mwid
+from main_window import MainWindow
+from main_widget import Widget
 
-# Initialisiere die Qt-Anwendung
+# QT-Anwendung starten
 app = QApplication(sys.argv)
 
-# Erstelle Hauptfenster und zeige es an
-widget = mwid.Widget()
-window = mwin.MainWindow(widget)
+# Widget anlegen und dem Window übergeben
+widget = Widget()
+window = MainWindow(widget)
 window.show()
 
-# Beende die Anwendung, wenn das Hauptfenster geschlossen wird
+# Anwendung beenden, wenn Fenster geschlossen wird
 sys.exit(app.exec())
