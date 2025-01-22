@@ -84,17 +84,17 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
 
         # Objekte durschauen und deren Namen in der richtigen Überschrift auflisten
         for obj in self.myModel.get_mbsObjectList():
-            obj_type, name = self.myModel.get_object_type_and_name(obj)
-            if obj_type == "Body":
+            name = obj.parameter["name"]["value"] if "name" in obj.parameter else "Unbekannter Name"
+            if obj.getType() == "Body":
                 self.childBody = QTreeWidgetItem([name])
                 self.rootBody.addChild(self.childBody)
-            elif obj_type == "Constraint":
+            elif obj.getType() == "Constraint":
                 self.childConstraint = QTreeWidgetItem([name])
                 self.rootConstraint.addChild(self.childConstraint)
-            elif obj_type == "Force":
+            elif obj.getType() == "Force":
                 self.childForce = QTreeWidgetItem([name])
                 self.rootForces.addChild(self.childForce)
-            elif obj_type == "Measure":
+            elif obj.getType() == "Measure":
                 self.childMeasure = QTreeWidgetItem([name])
                 self.rootMeasures.addChild(self.childMeasure)
 
