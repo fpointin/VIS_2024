@@ -54,6 +54,8 @@ class MainWindow(QMainWindow):
         view_menu.addAction(self.create_action("Right View", self.set_right_view))
         view_menu.addAction(self.create_action("Top View", self.set_top_view))
         view_menu.addAction(self.create_action("Bottom View", self.set_bottom_view))
+        view_menu.addSeparator()
+        view_menu.addAction(self.create_action("Show Hidden Objects", self.show_all_objects))
         # Steuerung-Menü
         control_menu = menu_bar.addMenu("Control")
         control_menu.addAction(self.create_action("Switch Interactor Style", self.toggle_interactor_style))
@@ -121,6 +123,12 @@ class MainWindow(QMainWindow):
             "About",
             "VIS3VO/VIS3UE Projekt\nFreedyn GUI\nFabian Pointinger\nS2310566016\nfabian.pointinger@students.fh-wels.at\n"
         )
+
+
+    def show_all_objects(self):
+        # Alle Objekte anzeigen
+        self.centralWidget().set_all_objects_visible()
+        self.statusBar().showMessage("Alle Objekte sichtbar")
 
 
     def toggle_control_text(self):
