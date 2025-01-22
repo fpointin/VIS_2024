@@ -8,7 +8,7 @@ class MainWindow(QMainWindow):
     def __init__(self, widget):
         super().__init__()
 
-        self.setWindowTitle("3D Modell in QT mit VTK")
+        self.setWindowTitle("FreeDyn GUI mit QT und VTK | FH Wels | Fabian Pointinger")
 
         # zentrales Widget setzen und Renderer initialisieren
         self.setCentralWidget(widget)
@@ -77,6 +77,11 @@ class MainWindow(QMainWindow):
                 action.setShortcut(shortcut)
             action.triggered.connect(method)
             return action
+
+
+    def show_message(self, title, text):
+        # Fehlermeldung Ausgabe
+        QMessageBox.critical(self, title, text)
 
 
     def load_model(self):
@@ -235,8 +240,3 @@ class MainWindow(QMainWindow):
         camera.SetViewUp(up_x, up_y, up_z)
         renderer.ResetCamera()
         self.centralWidget().GetRenderWindow().Render()
-
-
-    def show_message(self, title, text):
-        # Fehlermeldung Ausgabe
-        QMessageBox.critical(self, title, text)

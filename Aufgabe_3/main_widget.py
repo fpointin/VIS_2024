@@ -56,7 +56,7 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
     def create_structure_tree_dock(self):
         # Dock und Baum anlegen
 
-        self.treeWidget = QTreeWidget()
+        self.treeWidget = QTreeWidget() # Tree Widget anlegen
         self.treeWidget.setHeaderLabels(["File Name"])
 
         self.treeWidget.setContextMenuPolicy(Qt.CustomContextMenu) # Kontextmenü aktivieren
@@ -64,49 +64,49 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
 
         self.treeDockWidget = QDockWidget("Model Tree", self) # Dockwidget für den Strukturbaum erstellen
         self.treeDockWidget.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
-        self.treeDockWidget.setWidget(self.treeWidget) # tree-widget in das Dock Widget setzen
+        self.treeDockWidget.setWidget(self.treeWidget) # Tree Widget in das Dock Widget setzen
 
-        self.update_structure_tree()  # Strukturbaum updaten
-        return self.treeDockWidget
+        self.update_structure_tree() # Strukturbaum updaten
+        return self.treeDockWidget # Dock Widget zurückgeben
     
 
     def show_context_menu(self, position):
         # Kontextmenü anzeigen
 
         selected_item = self.treeWidget.itemAt(position)
+        # nur für Kind-Elemente aktiv, nicht für Überschriften
         if selected_item is None or selected_item.parent() is None:
-            return  # Nur auf Kind-Elementen aktiv
+            return
 
-        context_menu = QMenu()
-        change_transparency_action = context_menu.addAction("Transparenz ändern")
+        context_menu = QMenu() # Kontextmenü anlegen
+        change_transparency_action = context_menu.addAction("Transparenz ändern") # Eintrag im Kontextmenü
         action = context_menu.exec(self.treeWidget.mapToGlobal(position))
 
         if action == change_transparency_action:
-            self.change_transparency(selected_item)
+            self.change_transparency(selected_item) # Transparenzänderung ausführen, wenn geklickt
 
 
     def change_transparency(self, item):
-        # Transparenzdialog mit Schieberegler
+        # Transparenzänderung mit Schieberegler
 
         body_name = item.text(0) # geklicktes Objekt
-        body_obj = next((obj for obj in self.myModel.get_mbsObjectList() if obj.parameter.get("name", {}).get("value") == body_name), None)
+        obj = next((obj for obj in self.myModel.get_mbsObjectList() if obj.parameter.get("name", {}).get("value") == body_name), None)
         # schauen, ob es das Objekt wirklich gibt
-        if body_obj is None:
+        if obj is None:
             QMessageBox.warning(self, "Fehler", f"Objekt '{body_name}' nicht gefunden.")
             return
 
-        # Dialog für Transparenz erstellen
-        dialog = QDialog(self)
+        dialog = QDialog(self) # Dialog erstellen
         dialog.setWindowTitle(f"Transparenz für '{body_name}' ändern")
         layout = QVBoxLayout(dialog)
 
         label = QLabel("0 = sichtbar ----------------- 1 = unsichtbar:")
-        slider = QSlider(Qt.Horizontal)
-        slider.setRange(0, 100)  # Bereich von 0 bis 100
-        slider.setValue(int(100 * (1 - body_obj.actors[0].GetProperty().GetOpacity())))  # Aktuellen Wert setzen
+        slider = QSlider(Qt.Horizontal) # Slider erstellen
+        slider.setRange(0, 100)  # Transparenzwert im Bereich von 0 bis 100 durch Slider vorgeben
+        slider.setValue(int(100 * (1 - obj.actors[0].GetProperty().GetOpacity())))  # Aktuellen Wert setzen
 
         apply_button = QPushButton("Übernehmen")
-        apply_button.clicked.connect(lambda: self.apply_transparency(body_obj, slider.value() / 100, dialog))
+        apply_button.clicked.connect(lambda: self.apply_transparency(obj, slider.value() / 100, dialog)) # Wert / 100 weil Transparenz zw. 0 und 1
 
         layout.addWidget(label)
         layout.addWidget(slider)
@@ -115,12 +115,13 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
         dialog.exec()
 
 
-    def apply_transparency(self, body_obj, transparency, dialog):
+    def apply_transparency(self, obj, transparency, dialog):
         # eingestellte Transparenz rendern
 
-        for actor in body_obj.actors:
+        for actor in obj.actors:
+            # für jedes Objekt im Aktor die Transparenz auf gesetzten Wert ändern
             actor.GetProperty().SetOpacity(1.0 - transparency)
-        self.GetRenderWindow().Render()  # Neu rendern
+        self.GetRenderWindow().Render()  # Neu rendern, damit es auch dargestellt wird
         dialog.accept()
 
 
@@ -129,8 +130,9 @@ class Widget(QVTK.QVTKRenderWindowInteractor):
 
         for body_obj in self.myModel.get_mbsObjectList():
             for actor in body_obj.actors:
+                # jedes Objekt voll sichtbar machen
                 actor.GetProperty().SetOpacity(1.0)  # Voll sichtbar
-        self.GetRenderWindow().Render()
+        self.GetRenderWindow().Render() # Neu rendern, damit es auch dargestellt wird
 
 
     def update_structure_tree(self, file_name="File Name"):
